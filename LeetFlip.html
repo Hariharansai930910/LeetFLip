@@ -1,0 +1,196 @@
+let currentProblemIndex = 0;
+
+        // Populate topics
+        function populateTopics() {
+            console.log("Populating topics...");
+            topicGrid.innerHTML = '';
+            
+            topics.forEach(topic => {
+                const problemCount = problems[topic.id] ? problems[topic.id].length : 0;
+                const topicCard = document.createElement('div');
+                topicCard.className = 'topic-card';
+                
+                if (problemCount === 0) {
+                    topicCard.className += ' disabled';
+                    topicCard.style.cursor = 'not-allowed';
+                } else {
+                    topicCard.style.cursor = 'pointer';
+                    topicCard.addEventListener('click', () => selectTopic(topic.id));
+                }
+                
+                topicCard.innerHTML = `
+                    <h3>${topic.name}</h3>
+                    <p>${problemCount > 0 ? `${problemCount} problems` : 'Coming soon'}</p>
+                `;
+                
+                topicGrid.appendChild(topicCard);
+            });
+        }
+
+        // Select a topic
+        function selectTopic(topicId) {
+            console.log("Selected topic:", topicId);
+            selectedTopicId = topicId;
+            currentProblemIndex = 0;
+            
+            topicSection.style.display = 'none';
+            flashcardSection.style.display = 'block';
+            
+            const topic = topics.find(t => t.id === topicId);
+            currentTopic.textContent = topic.name;
+            
+            loadProblem();
+        }
+
+        // Load current problem
+        function loadProblem() {
+            console.log("Loading problem...");
+            const currentProblems = problems[selectedTopicId];
+            if (!currentProblems || currentProblems.length === 0) {
+                console.error("No problems found for topic", selectedTopicId);
+                return;
+            }
+            
+            const problem = currentProblems[currentProblemIndex];
+            console.log("Current problem:", problem);
+            
+            // Update counter and navigation
+            problemCounter.textContent = `Card ${currentProblemIndex + 1} of ${currentProblems.length}`;
+            prevButton.disabled = currentProblemIndex === 0;
+            nextButton.disabled = currentProblemIndex === currentProblems.length - 1;
+            
+            // Reset card state
+            flashcard.classList.remove('flipped');
+            
+            // Update front of card
+            document.getElementById('card-title').textContent = problem.title;
+            document.getElementById('card-title-back').textContent = `${problem.title} - Solution`;
+            
+            // Set difficulty badge
+            const difficultyBadge = document.getElementById('card-difficulty');
+            difficultyBadge.textContent = problem.difficulty;
+            difficultyBadge.className = 'difficulty';
+            
+            if (problem.difficulty === 'Easy') {
+                difficultyBadge.classList.add('easy');
+            } else if (problem.difficulty === 'Medium') {
+                difficultyBadge.classList.add('medium');
+            } else {
+                difficultyBadge.classList.add('hard');
+            }
+            
+            // Update content
+            questionContent.textContent = problem.question;
+            hintContent.textContent = problem.hint || "No hint available";
+            mnemonicContent.innerHTML = problem.mnemonic || "No mnemonic available";
+            threeLinerContent.textContent = problem.threeLiner || "No simple explanation available";
+            document.getElementById('code-block').textContent = problem.code || "No code available";
+            
+            // Reset tabs
+            resetTabs();
+        }
+
+        // Reset tab selection
+        function resetTabs() {
+            // Front tabs
+            questionTab.classList.add('active');
+            hintTab.classList.remove('active');
+            questionContent.classList.add('active');
+            hintContent.classList.remove('active');
+            
+            // Back tabs
+            mnemonicTab.classList.add('active');
+            threeLinerTab.classList.remove('active');
+            codeTab.classList.remove('active');
+            mnemonicContent.classList.add('active');
+            threeLinerContent.classList.remove('active');
+            codeContent.classList.remove('active');
+        }
+
+        // Event listeners
+        backButton.addEventListener('click', () => {
+            flashcardSection.style.display = 'none';
+            topicSection.style.display = 'block';
+        });
+        
+        prevButton.addEventListener('click', () => {
+            if (currentProblemIndex > 0) {
+                currentProblemIndex--;
+                loadProblem();
+            }
+        });
+        
+        nextButton.addEventListener('click', () => {
+            const currentProblems = problems[selectedTopicId];
+            if (currentProblemIndex < currentProblems.length - 1) {
+                currentProblemIndex++;
+                loadProblem();
+            }
+        });
+        
+        flashcard.addEventListener('click', () => {
+            flashcard.classList.toggle('flipped');
+        });
+        
+        // Front tab switching
+        questionTab.addEventListener('click', (e) => {
+            e.stopPropagation(); // Prevent card flip
+            questionTab.classList.add('active');
+            hintTab.classList.remove('active');
+            questionContent.classList.add('active');
+            hintContent.classList.remove('active');
+        });
+        
+        hintTab.addEventListener('click', (e) => {
+            e.stopPropagation(); // Prevent card flip
+            hintTab.classList.add('active');
+            questionTab.classList.remove('active');
+            hintContent.classList.add('active');
+            questionContent.classList.remove('active');
+        });
+        
+        // Back tab switching
+        mnemonicTab.addEventListener('click', (e) => {
+            e.stopPropagation(); // Prevent card flip
+            mnemonicTab.classList.add('active');
+            threeLinerTab.classList.remove('active');
+            codeTab.classList.remove('active');
+            mnemonicContent.classList.add('active');
+            threeLinerContent.classList.remove('active');
+            codeContent.classList.remove('active');
+        });
+        
+        threeLinerTab.addEventListener('click', (e) => {
+            e.stopPropagation(); // Prevent card flip
+            threeLinerTab.classList.add('active');
+            mnemonicTab.classList.remove('active');
+            codeTab.classList.remove('active');
+            threeLinerContent.classList.add('active');
+            mnemonicContent.classList.remove('active');
+            codeContent.classList.remove('active');
+        });
+        
+        codeTab.addEventListener('click', (e) => {
+            e.stopPropagation(); // Prevent card flip
+            codeTab.classList.add('active');
+            mnemonicTab.classList.remove('active');
+            threeLinerTab.classList.remove('active');
+            codeContent.classList.add('active');
+            mnemonicContent.classList.remove('active');
+            threeLinerContent.classList.remove('active');
+        });
+        
+        // Initialize app
+        document.addEventListener('DOMContentLoaded', () => {
+            console.log("DOM loaded, initializing app");
+            populateTopics();
+        });
+        
+        // Additional initialization in case DOMContentLoaded already fired
+        if (document.readyState === 'complete' || document.readyState === 'interactive') {
+            console.log("Document already loaded, initializing now");
+            populateTopics();
+        }
+    </script>
+</body>
+</html>
